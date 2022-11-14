@@ -1,4 +1,5 @@
 const { Task } = require('../models')
+const Response = require('../util/response')
 
 class TaskController {
     static createTask(req, res, next) {
@@ -20,13 +21,30 @@ class TaskController {
     }
 
     static getTasks(req, res, next) {
-        Task.findAll()
-            .then(data => {
-                res.status(200).json(data)
+        try {
+            const response = new Response();
+
+            const { page = 1, limit = -1, sort = undefined } = req.query;
+
+            const offset = (page - 1) * limit;
+            const order = (sort != undefined) ? sort.split(':') : ['id', 'ASC'];
+            Task.findAndCountAll({
+                order: [order],
+                limit: +limit,
+                offset: +offset
             })
-            .catch(err => {
-                next(err)
-            })
+                .then(data => {
+                    response.setBody({
+                        message: 'OK',
+                        data: data.rows,
+                        total: data.count,
+                        timestamp: (Date.now() - response.body.timestamp) / 1000
+                    });
+                    response.send(res);
+                })
+        } catch (err) {
+            next(err)
+        }
     }
 
     static getTaskById(req, res, next) {
