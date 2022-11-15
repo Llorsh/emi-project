@@ -4,6 +4,8 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 require('dotenv').config()
 
+const returnError = require('./util/error');
+
 const indexRouter = require('./routes/index');
 
 const app = express();
@@ -14,5 +16,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use(`/${process.env.API_VERSION}/api`, indexRouter);
+
+app.use(returnError)
 
 module.exports = app;

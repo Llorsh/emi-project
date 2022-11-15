@@ -8,10 +8,7 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      name: {
-        type: Sequelize.STRING
-      },
-      lastName: {
+      names: {
         type: Sequelize.STRING
       },
       email: {
@@ -21,6 +18,12 @@ module.exports = {
         type: Sequelize.STRING
       },
       image: {
+        type: Sequelize.STRING
+      },
+      parent_id: {
+        type: Sequelize.INTEGER
+      },
+      userName: {
         type: Sequelize.STRING
       },
       createdAt: {

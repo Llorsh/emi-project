@@ -10,6 +10,7 @@ const AuthController = {
         const response = new Response();
         try {
             const user = await User.findOne({ where: { email } });
+            
             if (user) {
                 const isValid = bcrypt.compareSync(password, user.password);
                 if (isValid) {
@@ -32,7 +33,7 @@ const AuthController = {
     register: async (req, res, next) => {
         const response = new Response();
         try {
-            const { email, password, name, lastName } = req.body;
+            const { email, password, names } = req.body;
 
             const user = await User.findOne({ where: { email: email } });
 
@@ -45,8 +46,7 @@ const AuthController = {
             const newUser = await User.create({
                 email: email,
                 password: hash,
-                name: name,
-                lastName: lastName
+                names: names,
             });
             const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, {
                 expiresIn: 86400 // expires in 24 hours

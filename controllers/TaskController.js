@@ -1,129 +1,126 @@
 const { Task } = require('../models')
 const Response = require('../util/response')
 
-class TaskController {
-    static createTask(req, res, next) {
-        const { title, description, status, due_date } = req.body
-        const UserId = req.currentUserId
-        Task.create({
-            title,
-            description,
-            status,
-            due_date,
-            UserId
-        })
-            .then(data => {
-                res.status(201).json(data)
-            })
-            .catch(err => {
-                next(err)
-            })
-    }
 
-    static getTasks(req, res, next) {
+const TaskController = {
+    createTask: async (req, res, next) => {
+        const response = new Response()
         try {
-            const response = new Response();
+            const { name, description, points } = req.body
+            const task = await Task.create({
+                name,
+                description,
+                user_id: req.user.id,
+                points: points || 0
+            });
 
-            const { page = 1, limit = -1, sort = undefined } = req.query;
-
-            const offset = (page - 1) * limit;
-            const order = (sort != undefined) ? sort.split(':') : ['id', 'ASC'];
-            Task.findAndCountAll({
-                order: [order],
-                limit: +limit,
-                offset: +offset
+            response.setBody({
+                message: 'Task created successfully',
+                data: task
+            }).setStatusCode(201).send(res)
+        } catch (error) {
+            next(error)
+        }
+    },
+    getTasks: async (req, res, next) => {
+        const response = new Response()
+        try {
+            const tasks = await Task.findAll({
+                where: {
+                    user_id: req.user.id
+                },
+                order: [
+                    ['id', 'DESC']
+                ],
+                attributes: ['id', 'name', 'description', 'points']
             })
-                .then(data => {
-                    response.setBody({
-                        message: 'OK',
-                        data: data.rows,
-                        total: data.count,
-                        timestamp: (Date.now() - response.body.timestamp) / 1000
-                    });
-                    response.send(res);
-                })
-        } catch (err) {
-            next(err)
+
+            response.setBody({
+                message: 'Tasks retrieved successfully',
+                data: tasks
+            }).send(res)
+        } catch (error) {
+            next(error)
+        }
+    },
+    getTaskById: async (req, res, next) => {
+        const response = new Response()
+        try {
+            const task = await Task.findOne({
+                where: {
+                    id: req.params.id,
+                    user_id: req.user.id
+                },
+                attributes: ['id', 'name', 'description', 'points']
+            });
+            if (!task) {
+                response.setBody({
+                    message: 'Tarea No Encontrada'
+                }).setStatusCode(404).send(res)
+            } else {
+                response.setBody({
+                    message: 'Tarea Encontrada',
+                    data: task
+                }).send(res)
+            }
+        } catch (error) {
+            next(error)
+        }
+    },
+    updateTaskById: async (req, res, next) => {
+        const response = new Response()
+        try {
+            const task = await Task.findOne({
+                where: {
+                    id: req.params.id,
+                    user_id: req.user.id
+                }
+            });
+            if (!task) {
+                response.setBody({
+                    message: 'Tarea No Encontrada'
+                }).setStatusCode(404).send(res)
+
+            } else {
+                const { name, description, points } = req.body
+                await task.update({
+                    name,
+                    description,
+                    points
+                });
+                response.setBody({
+                    message: 'Tarea Actualizada',
+                    data: task
+                }).send(res)
+            }
+        } catch (error) {
+            next(error)
+        }
+    },
+    deleteTaskById: async (req, res, next) => {
+        const response = new Response()
+        try {
+            const task = await Task
+                .findOne({
+                    where: {
+                        id: req.params.id,
+                        user_id: req.user.id
+                    }
+                });
+            if (!task) {
+                response.setBody({
+                    message: 'Tarea No Encontrada'
+                }).setStatusCode(404).send(res)
+            } else {
+                await task.destroy();
+                response.setBody({
+                    message: 'Tarea Eliminada'
+                }).send(res)
+            }
+        } catch (error) {
+            next(error)
         }
     }
-
-    static getTaskById(req, res, next) {
-        const id = req.params.id
-        Task.findByPk(id)
-            .then(data => {
-                if (data) {
-                    res.status(200).json(data)
-                } else {
-                    next({ name: 'NotFound' })
-                }
-            })
-            .catch(err => {
-                next(err)
-            })
-    }
-
-    static updateTaskById(req, res, next) {
-        const id = req.params.id
-        const { title, description, status, due_date } = req.body
-        Task.update({
-            title,
-            description,
-            status,
-            due_date
-        }, {
-            where: { id },
-            returning: true
-        })
-            .then(data => {
-                if (data[0] === 0) {
-                    next({ name: 'NotFound' })
-                } else {
-                    res.status(200).json(data[1][0])
-                }
-            })
-            .catch(err => {
-                next(err)
-            })
-    }
-
-    static deleteTaskById(req, res, next) {
-        const id = req.params.id
-        Task.destroy({
-            where: { id }
-        })
-            .then(data => {
-                if (data) {
-                    res.status(200).json({ message: 'Task success to delete' })
-                } else {
-                    next({ name: 'NotFound' })
-                }
-            })
-            .catch(err => {
-                next(err)
-            })
-    }
-
-    static updateStatusTaskById(req, res, next) {
-        const id = req.params.id
-        const { status } = req.body
-        Task.update({
-            status
-        }, {
-            where: { id },
-            returning: true
-        })
-            .then(data => {
-                if (data[0] === 0) {
-                    next({ name: 'NotFound' })
-                } else {
-                    res.status(200).json(data[1][0])
-                }
-            })
-            .catch(err => {
-                next(err)
-            })
-    }
 }
-
 
 module.exports = TaskController

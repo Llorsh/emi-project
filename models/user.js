@@ -10,15 +10,20 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
+      /* relación entre usuario e hijo - 1 padre varios hijos */
+      this.hasMany(models.User, {
+        as: 'children',
+        foreignKey: 'parent_id'
+      });
     }
   }
   User.init({
-    name: DataTypes.STRING,
-    lastName: DataTypes.STRING,
+    names: DataTypes.STRING,
     email: DataTypes.STRING,
     password: DataTypes.STRING,
-    image: DataTypes.STRING
+    image: DataTypes.STRING,
+    userName: DataTypes.STRING,
+    parent_id: DataTypes.INTEGER,
   }, {
     sequelize,
     modelName: 'User',
