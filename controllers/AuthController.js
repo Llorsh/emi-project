@@ -10,11 +10,18 @@ const AuthController = {
         const response = new Response();
         try {
             const user = await User.findOne({ where: { email } });
-            
+
             if (user) {
                 const isValid = bcrypt.compareSync(password, user.password);
                 if (isValid) {
-                    const access_token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET);
+                    const access_token = jwt.sign({
+                        id: user.id,
+                        email: user.email,
+                        parent_id: user.parent_id,
+                        names: user.names,
+                        userName: user.userName,
+
+                    }, process.env.JWT_SECRET);
                     response.setBody({
                         access_token
                     });
